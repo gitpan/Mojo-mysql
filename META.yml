@@ -12,7 +12,7 @@ license: artistic_2
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: 1.4
-name: Mojo-MySQL
+name: Mojo-mysql
 no_index:
   directory:
     - t
