@@ -24,4 +24,4 @@ resources:
   bugtracker: https://github.com/jhthorsen/mojo-mysql/issues
   homepage: https://github.com/jhthorsen/mojo-mysql
   repository: https://github.com/jhthorsen/mojo-mysql.git
-version: 0.01
+version: 0.02
