@@ -1,10 +1,10 @@
 .perltidyrc
 Changes
 cpanfile
-lib/Mojo/.mysql.pm.swp
 lib/Mojo/mysql.pm
 lib/Mojo/mysql/Database.pm
 lib/Mojo/mysql/Results.pm
+lib/Mojo/mysql/Transaction.pm
 LICENSE
 local/test.sh
 Makefile.PL
@@ -12,8 +12,6 @@ MANIFEST			This list of files
 MANIFEST.SKIP
 README
 README.pod
-t/.database.t.swp
-t/.mysql_auto_reconnect.t.swp
 t/database.t
 t/mysql_auto_reconnect.t
 t/mysql_lite_app.t
