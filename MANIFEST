@@ -3,6 +3,7 @@ Changes
 cpanfile
 lib/Mojo/mysql.pm
 lib/Mojo/mysql/Database.pm
+lib/Mojo/mysql/Migrations.pm
 lib/Mojo/mysql/Results.pm
 lib/Mojo/mysql/Transaction.pm
 LICENSE
@@ -13,6 +14,8 @@ MANIFEST.SKIP
 README
 README.pod
 t/database.t
+t/migrations.t
+t/migrations/test.sql
 t/mysql_auto_reconnect.t
 t/mysql_lite_app.t
 t/pod.t

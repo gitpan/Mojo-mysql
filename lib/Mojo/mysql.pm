@@ -1,17 +1,24 @@
 package Mojo::mysql;
-use Mojo::Base -base;
+use Mojo::Base 'Mojo::EventEmitter';
 
 use Carp 'croak';
 use DBI;
 use Mojo::mysql::Database;
+use Mojo::mysql::Migrations;
 use Mojo::URL;
+use Scalar::Util 'weaken';
 
 has dsn             => 'dbi:mysql:dbname=test';
 has max_connections => 5;
-has options         => sub { {AutoCommit => 1, PrintError => 0, RaiseError => 1} };
+has migrations      => sub {
+  my $migrations = Mojo::mysql::Migrations->new(mysql => shift);
+  weaken $migrations->{mysql};
+  return $migrations;
+};
+has options => sub { {AutoCommit => 1, PrintError => 0, RaiseError => 1} };
 has [qw(password username)] => '';
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 sub db {
   my $self = shift;
@@ -19,7 +26,8 @@ sub db {
   # Fork safety
   delete @$self{qw(pid queue)} unless ($self->{pid} //= $$) eq $$;
 
-  return Mojo::mysql::Database->new(dbh => $self->_dequeue, mysql => $self);
+  my ($dbh, $handle) = @{$self->_dequeue};
+  return Mojo::mysql::Database->new(dbh => $dbh, handle => $handle, mysql => $self);
 }
 
 sub from_string {
@@ -56,7 +64,7 @@ sub _dequeue {
   my $self = shift;
   my $dbh;
 
-  while ($dbh = shift @{$self->{queue} || []}) { return $dbh if $dbh->ping }
+  while (my $c = shift @{$self->{queue} || []}) { return $c if $c->[0]->ping }
   $dbh = DBI->connect(map { $self->$_ } qw(dsn username password options));
 
   # <mst> batman's probably going to have more "fun" than you have ...
@@ -64,12 +72,13 @@ sub _dequeue {
   # you, silently, but only if certain env vars are set
   # hint: force-set mysql_auto_reconnect or whatever it's called to 0
   $dbh->{mysql_auto_reconnect} = 0;
-  $dbh;
+  [$dbh];
 }
 
 sub _enqueue {
-  my ($self, $dbh) = @_;
-  push @{$self->{queue}}, $dbh if $dbh->{Active};
+  my ($self, $dbh, $handle) = @_;
+  my $queue = $self->{queue} ||= [];
+  push @$queue, [$dbh, $handle] if $dbh->{Active};
   shift @{$self->{queue}} while @{$self->{queue}} > $self->max_connections;
 }
 
@@ -87,7 +96,7 @@ Mojo::mysql - Mojolicious and Async MySQL
 
   # Create a table
   my $mysql = Mojo::mysql->new('mysql://username@/test');
-  $mysql->db->do('create table if not exists names (name varchar(255))');
+  $mysql->db->do('create table if not exists names (name text)');
 
   # Insert a few rows
   my $db = $mysql->db;
@@ -148,6 +157,19 @@ Data Source Name, defaults to C<dbi:mysql:dbname=test>.
 
 Maximum number of idle database handles to cache for future use, defaults to
 C<5>.
+
+=head2 migrations
+
+MySQL does not support DDL transactions. B<Therefore, migrations should be used with extreme caution. Backup your database. You've been warned.> 
+
+  my $migrations = $mysql->migrations;
+  $mysql         = $mysql->migrations(Mojo::mysql::Migrations->new);
+
+L<Mojo::mysql::Migrations> object you can use to change your database schema more
+easily.
+
+  # Load migrations from file and migrate to latest version
+  $mysql->migrations->from_file('/Users/sri/migrations.sql')->migrate;
 
 =head2 options
 
@@ -215,6 +237,8 @@ Construct a new L<Mojo::mysql> object and parse connection string with
 L</"from_string"> if necessary.
 
 =head1 AUTHOR
+
+Curt Hochwender, C<hochwender@centurytel.net>.
 
 Jan Henning Thorsen, C<jhthorsen@cpan.org>.
 

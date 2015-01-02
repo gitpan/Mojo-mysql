@@ -19,9 +19,9 @@ no_index:
     - inc
 requires:
   DBD::mysql: 0
-  Mojolicious: 5.47
+  Mojolicious: 5.49
 resources:
   bugtracker: https://github.com/jhthorsen/mojo-mysql/issues
   homepage: https://github.com/jhthorsen/mojo-mysql
   repository: https://github.com/jhthorsen/mojo-mysql.git
-version: 0.03
+version: 0.04
